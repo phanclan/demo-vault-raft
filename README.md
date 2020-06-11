@@ -7,10 +7,12 @@
 [Vault HA Cluster with Integrated Storage - Join nodes to the cluster](bear://x-callback-url/open-note?id=15A10C1F-D8EC-418A-9944-4676AE48BADD-64526-00023CC3447DB4DA&header=Join%20nodes%20to%20the%20cluster)
 [Vault HA Cluster with Integrated Storage - Retry join](bear://x-callback-url/open-note?id=15A10C1F-D8EC-418A-9944-4676AE48BADD-64526-00023CC3447DB4DA&header=Retry%20join)
 [Vault HA Cluster with Integrated Storage - Raft snapshots for data recovery](bear://x-callback-url/open-note?id=15A10C1F-D8EC-418A-9944-4676AE48BADD-64526-00023CC3447DB4DA&header=Raft%20snapshots%20for%20data%20recovery)
+[Vault HA Cluster with Integrated Storage - Resign from active duty](bear://x-callback-url/open-note?id=15A10C1F-D8EC-418A-9944-4676AE48BADD-64526-00023CC3447DB4DA&header=Resign%20from%20active%20duty)
+[Vault HA Cluster with Integrated Storage - Remove a cluster member](bear://x-callback-url/open-note?id=15A10C1F-D8EC-418A-9944-4676AE48BADD-64526-00023CC3447DB4DA&header=Remove%20a%20cluster%20member)
 
 
 # Challenge
-Vault supports many storage providers to persist its encrypted data (e.g. Consul, MySQL, DynamoDB, etc.). 
+Vault supports many storage providers to persist its encrypted data (e.g. Consul, MySQL, DynamoDB, etc.).
 
 These providers require:
 
@@ -20,7 +22,7 @@ These providers require:
 
 
 # Solution
-Use Vault's Integrated Storage to persist the encrypted data. 
+Use Vault's Integrated Storage to persist the encrypted data.
 
 The [Integrated Storage](https://www.vaultproject.io/docs/configuration/storage/raft.html) has the following benefits:
 
@@ -31,14 +33,14 @@ The [Integrated Storage](https://www.vaultproject.io/docs/configuration/storage/
 * Performance gains (reduces disk write/read overhead)
 * Lowers complexity when diagnosing issues (leading to faster time to recovery)
 
-![](Vault%20HA%20Cluster%20with%20Integrated%20Storage/vault-raft-0.png)
+![](vault-raft-0.png)
 
 
 ## Prerequisites
 This guide requires Vault, sudo access, and additional configuration to create the cluster.
 
-> **Online tutorial:** An interactive tutorial is also available if you do not wish to install a Vault HA cluster locally.  
-> https://www.katacoda.com/hashicorp/scenarios/vault-raft  
+> **Online tutorial:** An interactive tutorial is also available if you do not wish to install a Vault HA cluster locally.
+> https://www.katacoda.com/hashicorp/scenarios/vault-raft
 
 * You will need to install Vagrant with Virtualbox or Docker Desktop.
 * You will need a Vault enterprise license named `vault.hclic` in the `demo-vault-raft` directory.
@@ -72,7 +74,7 @@ The provisioning scripts configures and starts three Vault servers. Here's a dia
 
 - [ ] ::[pp] needs to be updated::
 
-![](Vault%20HA%20Cluster%20with%20Integrated%20Storage/vault-raft-1.png)
+![](vault-raft-1.png)
 
 * **server-a-1** (`http://192.168.50.101:8200`) is initialized and unsealed. This Vault starts as the cluster leader. An example K/V-V2 secret is created.
 * **server-a-2** (`http://192.168.50.102:8200`) is only started. You will join it to the cluster.
@@ -81,7 +83,7 @@ The provisioning scripts configures and starts three Vault servers. Here's a dia
 * Make the `configure-vault.sh` file executable:
 
 ```
-chmod +x configure-vault.sh
+chmod +x ../configure-vault.sh
 ```
 
 - [ ] Run `configure-vault.sh`. Will create configuration for all Vault servers. Will also initialize **server-a-1**.
@@ -104,7 +106,7 @@ vault operator unseal w/45tJ1xDArSPaJTNLnBi7gFhrXeW3QvOslTp6micFWZ
 vault operator unseal OY34RgYoZ29FwSW8GudVfCfc6wLC97KwHA75VNBl+mpF
 ```
 
-- [ ] Validate that all four Vaults are running, and ONLY **vault_2** is **initialized** and **unsealed**:
+- [ ] Validate that all three Vaults are running, and ONLY **server-a-1** is **initialized** and **unsealed**:
 
 ```
 for i in 1 2 3; do
@@ -131,7 +133,7 @@ HA Enabled         true
 
 - - - -
 
-## Create an HA cluster
+# Create an HA cluster
 
 Currently **server-a-1** is initialized, unsealed, and has HA enabled. It is the only node in a cluster. The remaining nodes, **server-a-2** and **server-a-3**, have not joined its cluster.
 
@@ -139,7 +141,7 @@ Currently **server-a-1** is initialized, unsealed, and has HA enabled. It is the
 
 Let's discover more about the configuration of **server-a-1** and how it describes the current state of the cluster.
 
-* ::[pp - need to edit this]:: First, examine the **server-a-1** server configuration file (`config-vault_2.hcl`).
+* ::[pp - need to edit this]:: First, examine the **server-a-1** server configuration file (`/etc/vault.d/vault.hcl`).
 
 ```
 storage "raft" {
@@ -157,14 +159,14 @@ disable_mlock = true
 ui = true
 ```
 
-To use the integrated storage, the storage stanza is set to `raft`. The path specifies the path where Vault data will be stored (`/tmp/vault/server`).
+To use the integrated storage, the storage stanza is set to `raft`. The `path` specifies the path where Vault data will be stored (`/tmp/vault/server`).
 
 - [ ] From host system, examine the current raft peer set **server-a-1**.
 
 ```
 export VAULT_TOKEN=$(grep 'Initial Root Token' ../tmp/vault.init | awk '{print $NF}')
-
 export VAULT_ADDR=http://192.168.50.101:8200
+
 vault operator raft list-peers
 ```
 
@@ -204,9 +206,9 @@ Key       Value
 Joined    true
 ```
 
-The `http://192.168.50.101:8200` is the **server-a-1** server address which has been already initialized and auto-unsealed. This makes **server-a-1** the **active** node and its storage behaves as the **leader** in this cluster.
+The `http://192.168.50.101:8200` is the **server-a-1** server address which has been already initialized and ~~auto-~~ unsealed. This makes **server-a-1** the **active** node and its storage behaves as the **leader** in this cluster.
 
-- [ ] Unseal **server-a-1**. The commands to run are at the end of the script output.
+- [ ] Unseal **server-a-2**. The commands to run are at the end of the script output.
 
 ```
 vault operator unseal <key1>
@@ -253,7 +255,7 @@ $ cat vault_3.log
 
 The log describes the process of joining the cluster.
 
-- [ ] Finally, verify that you can read the secret at `kv/apikey`. Note: you are seeing this from **server-a-2** as set by `VAULT_ADDR`.
+- [ ] Finally, verify that you can read the secret at `kv/apikey`. Note: you are seeing this from **server-a-2** as set by `VAULT_ADDR`. This secret was enabled and created with the configure-va``ult.sh script.
 
 ```
 vault kv get kv/apikey
@@ -306,9 +308,9 @@ Since the address of **server-a-1** and **server-a-2** are known, you can predef
 
 ```
 export VAULT_ADDR=http://192.168.50.103:8200
-vault operator unseal JCjUXY82VfRgCpoKNLVzgCxyb1+xZmjIy27G1B/1fUxO
-vault operator unseal jSiDZeH9Chq4ujTmvGa82jF5ZjYrZng585tGXDiF44e/
-vault operator unseal g9ScBoNPuSe7TRbzPfExg12s6tDg1a2KmawnwoFgWcAd
+vault operator unseal <key1>
+vault operator unseal <key2>
+vault operator unseal <key3>
 ```
 
 - [ ] List the peers and notice that **server-a-3** is listed as a follower node.
@@ -326,12 +328,12 @@ server-a-2    192.168.50.102:8201    follower    true
 server-a-3    192.168.50.103:8201    follower    true
 ```
 
-> TIP: `node_id` - sets what you see under **Node**.   
-> `cluster_addr` - sets what you see under **Address**.  
+> TIP: `node_id` - sets what you see under **Node**.
+> `cluster_addr` - sets what you see under **Address**.
 
 - - - -
 
-## Prepare for Raft Snapshot Scenarios
+# Prepare for Raft Snapshot Scenarios
 
 - [ ] Patch the secret at `kv/apikey` from **server-a-3**
 
@@ -406,7 +408,6 @@ vault kv metadata delete kv/apikey
 ```
 
 - [ ] Finally, verify that the data has been deleted.
-
 ```
 $ vault kv get kv/apikey
 No value found at kv/data/apikey
@@ -414,16 +415,16 @@ No value found at kv/data/apikey
 
 ## Restore data from a snapshot
 
+(Optional) You can tail the server log of the active node (**server-a-1**). Open another terminal so you can see the logs while you restore.
+
+```
+tail -f /var/log/syslog
+```
+
 First, recover the data by restoring the data found in `demo.snapshot`.
 
 ```
 vault operator raft snapshot restore ../tmp/demo.snapshot
-```
-
-::[pp - need to edit]:: ~~(Optional) You can tail the server log of the active node (**vault_2**).~~
-
-```
-$ tail -f vault_2.log
 ```
 
 - [ ] Verify that the data has been recovered.
@@ -451,18 +452,18 @@ webapp        ABB39KKPTWOR832JGNLS02
 
 - - - -
 
-## Resign from active duty
-Currently, **server-a-1** is the **active** node. Experiment to see what happens if **vault_2** steps down from its active node duty.
+# Resign from active duty
+Currently, **server-a-1** is the **active** node. Experiment to see what happens if **server-a-1** steps down from its active node duty.
 
 * In the terminal where `VAULT_ADDR` is set to `http://192.168.50.101:8200`, execute the `step-down` command.
 
 ```
-export VAULT_ADDR=http://192.168.50.102:8200
+export VAULT_ADDR=http://192.168.50.101:8200
 vault operator step-down
 ```
 
 ```
-Success! Stepped down: http://127.0.0.2:8200
+Success! Stepped down: http://192.168.50.101:8200
 ```
 
 In the terminal where `VAULT_ADDR` is set to `http://192.168.50.102:8200`, examine the raft peer set.
@@ -484,16 +485,15 @@ Notice that **server-a-2** is now promoted to be the leader and **server-a-1** b
 
 - - - -
 
-## Remove a cluster member
-
-THE REST OF THIS IS **WORK IN PROGRESS**!!!
-
-💀 [pp] I have issues with removing cluster members. The cluster will go down. After removing a member I get the following message.
+# Remove a cluster member (server-a-3)
+> 💀 [pp] I have issues with removing cluster members. The cluster will go down. After removing a member I get the following message.
 
 ```
 $ vault operator raft list-peers
 No raft cluster configuration found
 ```
+
+> [update 20200610] Issue has gone away with version 1.4.2.
 
 It may become important to remove nodes from the cluster for maintenance, upgrades, or to preserve compute resources.
 
@@ -507,61 +507,72 @@ vault operator raft remove-peer server-a-3
 Peer removed successfully!
 ```
 
-- [ ] Verify that **vault_4** has been removed from the cluster by viewing the raft cluster peers.
+- [ ] Verify that **server-a-3** has been removed from the cluster by viewing the raft cluster peers.
 
 ```
 $ vault operator raft list-peers
-
-Node       Address           State       Voter
-----       -------           -----       -----
-vault_2    127.0.0.2:8201    follower    true
-vault_3    127.0.0.3:8201    leader      true
+Node          Address                State       Voter
+----          -------                -----       -----
+server-a-1    192.168.50.101:8201    follower    true
+server-a-2    192.168.50.102:8201    leader      true
 ```
 
-### Add vault_4 back to the cluster
+## Add server-a-3 back to the cluster
 This is an **optional** step.
 
-If you wish to add **vault_4** back to the HA cluster, return to the terminal where `VAULT_ADDR` is set to **vault_4** API address (`http://127.0.0.4:8200`), and stop **vault_4**.
+If you wish to add **server-a-3** back to the HA cluster, return to the terminal where `VAULT_ADDR` is set to **server-a-3** API address (`http://127.0.0.4:8200`), and stop **server-a-3**.
 
 ```
-$ ./cluster.sh stop vault_4
+vagrant ssh server-a-3 -c "sudo systemctl stop vault"
 ```
 
 Delete the data directory.
 
 ```
-$ rm -r raft-vault_4
+vagrant ssh server-a-3 -c "sudo rm -rf /tmp/vault/server"
 ```
 
 Now, create a raft-vault_4 directory again because the raft storage destination must exists before you can start the server.
 
 ```
-$ mkdir raft-vault_4
+vagrant ssh server-a-3 -c "sudo mkdir -p /tmp/vault/server"
 ```
 
-Start the **vault_4** server.
+Start the **server-a-3** server.
 
 ```
 $ ./cluster.sh start vault_4
+vagrant ssh server-a-3 -c "sudo systemctl start vault"
 ```
 
-You can again examine the peer set to confirm that **vault_4** successfully joined the cluster as a follower.
+Unseal **server-a-3** again.
+```
+export VAULT_ADDR="http://192.168.50.103:8200"
+vault operator unseal <key1>
+vault operator unseal <key2>
+vault operator unseal <key3>
+```
+
+You can again examine the peer set to confirm that **server-a-3** successfully joined the cluster as a follower.
 ```
 $ vault operator raft list-peers
-
-Node       Address           State       Voter
-----       -------           -----       -----
-vault_2    127.0.0.2:8201    follower    true
-vault_3    127.0.0.3:8201    leader      true
-vault_4    127.0.0.4:8201    follower    true
+Node          Address                State       Voter
+----          -------                -----       -----
+server-a-1    192.168.50.101:8201    follower    true
+server-a-2    192.168.50.102:8201    leader      true
+server-a-3    192.168.50.103:8201    follower    true
 ```
 
 
 - - - -
 
+# Recovery mode for troubleshooting
+
+::THE REST OF THIS IS **WORK IN PROGRESS**!!!::
+
+In the case of an outage caused by corrupt entries in the storage backend, an operator may need to start Vault in recovery mode. In this mode, Vault runs with minimal capabilities and exposes a subset of its API.
+
 ## Start vault_3 in recovery mode.
-
-
 
 SSH into **server-a-2**.
 
@@ -629,7 +640,7 @@ Enter the recovery key when prompted. The output looks similar to below.
 
 ```
 Operation nonce: d7842f20-0669-18c5-5e58-a92dca58d6d1
-Unseal Key (will be hidden): 
+Unseal Key (will be hidden):
 Nonce            d7842f20-0669-18c5-5e58-a92dca58d6d1
 Started          true
 Progress         3/3
@@ -682,3 +693,5 @@ Delete the counters at `sys/raw/sys/counters`.
 $ VAULT_TOKEN= r.BEHy5r9bs5xxU2ZuV9461p47 vault delete sys/raw/sys/counters
 Success! Data deleted (if it existed) at: sys/raw/sys/counters
 ```
+
+#HashiCorp/products/Vault
