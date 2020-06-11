@@ -11,7 +11,7 @@ echo "[*] Install DNSmasq"
 # elif [[ ! -z ${APT_GET} ]]; then
   logger "#==> Installing dnsmasq"
   sudo apt-get -qq update
-  sudo DEBIAN_FRONTEND=noninteractive apt-get install -qq dnsmasq-base dnsmasq
+  sudo DEBIAN_FRONTEND=noninteractive apt-get -qq install dnsmasq-base dnsmasq
 # else
 #   logger "Dnsmasq not installed due to OS detection failure"
 #   exit 1;
