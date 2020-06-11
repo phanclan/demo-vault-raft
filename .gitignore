@@ -19,7 +19,6 @@ license/
 *.hclic
 scripts/tmp/*
 tmp/*
-install.sh
 
 # .terraform
 # *.iml
